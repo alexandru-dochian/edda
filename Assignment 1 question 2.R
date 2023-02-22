@@ -125,7 +125,7 @@ abline(h = 0.05, lty = 2, col = "red")
 #In R, we can perform the test as follows:
 # Perform the one-sample Wilcoxon signed-rank test
 wilcox.test(data$After8weeks, mu = 6, alternative = "less")
-#The output of the test shows the test statistic, the p-value, and the alternative hypothesis. Since the p-value is less than 0.05, we can reject the null hypothesis that the median cholesterol level after 8 weeks of low fat diet is 6, in favor of the alternative hypothesis that the median is less than 6. Therefore, we can conclude that there is evidence that the median cholesterol level after 8 weeks of low fat diet is less than 6.
+#The output of the test shows the test statistic, the p-value, and the alternative hypothesis. Since the p-value is greater than 0.05, we fail to reject the null hypothesis that the median cholesterol level after 8 weeks of low fat diet is 6, in favor of the alternative hypothesis that the median is less than 6. Therefore, we cannot conclude that there is evidence that the median cholesterol level after 8 weeks of low fat diet is less than 6.
 #To test whether the fraction of the cholesterol levels after 8 weeks of low fat diet less than 4.5 is at most 25%, we can use the binomial test. The null hypothesis is that the true proportion is equal to 0.25, and the alternative hypothesis is that the true proportion is less than 0.25.
 #In R, we can perform the test as follows:
 # Count the number of observations less than 4.5
