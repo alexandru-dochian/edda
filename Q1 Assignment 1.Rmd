@@ -1,0 +1,48 @@
+---
+title: "R Assignment"
+output: html_notebook
+---
+```{r}
+print(birthweight$birthweight)
+```
+```{r}
+sample_mean <- mean(birthweight$birthweight)
+mean(sample_mean)
+```
+
+```{r}
+sample_sd <- sd(birthweight$birthweight)
+print(sample_sd)
+
+```
+
+```{r}
+dataset_hist <- hist(birthweight$birthweight, main= 'Distribution of Birthweight')
+print(dataset_hist)
+```
+```{r}
+standard_error <- sample_sd / sqrt(188)
+```
+```{r}
+t_value <- qt(0.98, 187)
+lower_bound <- sample_mean - (t_value * standard_error)
+upper_bound <- sample_mean + (t_value * standard_error)
+cat(round(lower_bound, 2), round(upper_bound, 2))
+```
+```{r}
+margin_of_error <- 50
+t_value <- qt(0.98, df = 187)
+n <- ceiling((t_value * sample_sd / margin_of_error) ^ 2)
+cat("The sample size needed to ensure that the length of the 96% CI is at most 100 is ", n)
+```
+```{r}
+library(boot)
+
+mymean <- function(x) {
+  return(mean(x))
+}
+myboot <- boot(data = birthweight$birthweight, statistic = mymean, R = 1000)
+help(boot)
+```
+
+
