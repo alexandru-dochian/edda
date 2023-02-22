@@ -2,6 +2,7 @@
 title: "R Assignment"
 output: html_notebook
 ---
+# A) 
 ```{r}
 print(birthweight$birthweight)
 ```
@@ -41,8 +42,14 @@ library(boot)
 mymean <- function(x) {
   return(mean(x))
 }
-myboot <- boot(data = birthweight$birthweight, statistic = mymean, R = 1000)
-help(boot)
+B <- 1000
+boot_means <- numeric(B)
+for (i in 1:B) {
+  boot_sample <- sample(birthweight$birthweight, replace = TRUE)
+  boot_means[i] <- mymean(boot_sample)
+}
+myboot_ci <- quantile(boot_means, c(0.02, 0.98))
+cat("Bootstrap 96% CI for the mean: [", round(myboot_ci[1], 2), ",", round(myboot_ci[2], 2), "]")
 ```
-
+# B) 
 
