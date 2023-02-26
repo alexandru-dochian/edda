@@ -1,0 +1,124 @@
+---
+title: "Data Analysis Report"
+output:
+  pdf_document: default
+---
+
+```{r dependencies, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+
+```
+
+***
+
+# Birthweights
+Todo
+
+***
+
+# Cholesterol
+TODO
+
+***
+
+# Diet
+
+```{r setup_diet, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+diet <- read.table("resources/diet.txt", header = TRUE)
+diet <- diet %>% 
+  mutate(weight_loss = preweight - weight6weeks)
+```
+
+
+Dataset peak:  
+
+
+```{r head_diet, include=TRUE}
+head(diet)
+
+```
+
+
+## a) Informative graphical summary
+
+We will visualise the weight loss and the average weight loss with respect to each diet.
+
+
+```{r}
+
+box_plot <- diet %>%
+  ggplot(aes(x = factor(diet), y = weight_loss)) +
+  geom_boxplot() +
+  labs(x = "Diet", y = "Weight lost", title = "Weight lost with respect to diet")
+
+median_plot <- diet %>% 
+  group_by(diet) %>% 
+  summarize(median_weight_loss = median(weight_loss)) %>%
+  ggplot(aes(x=factor(diet), y=median_weight_loss)) +
+  geom_bar(stat="identity", fill="blue") +
+  labs(x="Diet", y ="Median weight loss", title="Median weight loss with respect to diet") 
+
+median_plot + box_plot
+
+```
+
+
+Based on the visual information of weight loss and medium weight loss we argue that the third diet was the most efficient!
+
+
+## b) One-way Anova to test whether the the diet has an effect on the weight loss
+
+We assume that the weight loss is significantly different across all types of diet.
+
+```{r}
+fit <- aov(weight_loss ~ diet , data = diet)
+summary(fit)
+```
+
+We observe a very low value for P(F) << 1%, thus we will reject our hypothesis and conclude that at least one of the diets must have an effect over the weight loss.
+
+Given the high mean values for weight loss with respect to diet we conclude that the best diets were: 3, 2 and 1:
+
+```{r}
+diet %>% 
+  group_by(diet) %>% 
+  summarize(median_weight_loss = median(weight_loss)) %>%
+  arrange(desc(median_weight_loss))
+```
+
+
+
+## b) Two-way ANOVA to investigate effect of the diet and gender
+
+```{r}
+fit <- aov(weight_loss ~ diet * gender, data = diet)
+summary(fit)
+
+```
+
+We observe:
+
+* A very low value P(F) << 1% for diet
+  - We conclude diet has an effect on weight loss
+* A very high value P(F) >> 85% for gender
+  - We conclude gender has no significant effect on weight loss
+* A low value P(F) << 5% for the factorized effect of diet & gender on weight loss. 
+  - We conclude that there must be a causal effect between the gender and a particular diet.
+
+## e) Preferred ANOVA
+
+The results of the Two-way ANOVA suggest that the effectiveness of a diet is significantly associated with the gender of the participant.
+
+***
+# Yield of peas
+
+TODO
+
+
+***
+***
+***
