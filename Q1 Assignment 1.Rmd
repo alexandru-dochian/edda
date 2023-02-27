@@ -14,6 +14,7 @@ mean(sample_mean)
 ```{r}
 sample_sd <- sd(birthweight$birthweight)
 print(sample_sd)
+n = 188
 
 ```
 # Checking normality 
@@ -30,6 +31,7 @@ print(shap_val)
 
 # Bootstrap test:
 ```{r}
+library(boot)
 set.seed(123)
 gen_data <- rnorm(1000, mean = sample_mean, sd = sample_sd)
 
@@ -99,7 +101,7 @@ mu <- 2900
 sd <- sample_sd
 alpha <- 0.05
 d <- (mu - 2800) / sd
-power <- pwr.t.test(n=nn, d=d, sig.level=alpha, type="one.sample", alternative="greater")$power
+power <- pwr.t.test(nn, d=d, sig.level=alpha, type="one.sample", alternative="greater")$power
 cat("The power of the one-sample t-test is", round(power, 4))
 ```
 # The power of the t-test is 0.9936, this indicates a high power, which allows us to reject H0 correctly with an accuracy of 99.36%, the test has a high sensitivity and can detect a true difference between the true mean and hypothesized value. (This is just an extra test before doing the simulation)
@@ -108,7 +110,7 @@ cat("The power of the one-sample t-test is", round(power, 4))
 ```{r}
 set.seed(123)
 B = 1000
-n = n
+n = 188
 psign = numeric(B)
 pttest = numeric(B)
 for (i in 1:B) {
@@ -161,4 +163,16 @@ weight_ttest <- t.test(weight_all ~ c(both, both_2), var.equal = TRUE)
 cat("p-value for the t-test is:", weight_ttest$p.value)
 ```
 # The t-test provides us with a p-value of 0.41, which indicates that there is no statistical significance, since it is above alpha of 0.05 by a big difference, this allows us to conclude that the mean weight between males and females does not differ 
+
+
+```{r}
+lm = lm(yield ~., data = npk)
+step_model <- stepAIC(lm, direction = "both")
+```
+```{r}
+lm2 = lm(formula = yield ~ block + N + K + block*N, data = npk)
+lm3 = lm(formula = yield ~ block + N + block*K, data = npk)
+```
+
+
 
