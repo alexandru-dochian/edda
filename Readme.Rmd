@@ -19,8 +19,10 @@ library(patchwork)
 
 # Birthweights
 
-## a) 
-
+```{r}
+print(birthweight$birthweight)
+```
+# 1A
 ```{r}
 sample_mean <- mean(birthweight$birthweight)
 mean(sample_mean)
@@ -29,7 +31,6 @@ mean(sample_mean)
 ```{r}
 sample_sd <- sd(birthweight$birthweight)
 print(sample_sd)
-
 ```
 # Checking normality 
 ```{r}
@@ -37,24 +38,26 @@ dataset_hist <- hist(birthweight$birthweight, main= 'Distribution of Birthweight
 print(dataset_hist)
 dataset_qq <- qqnorm(birthweight$birthweight, main = 'Normal Q-Q Plot')
 print(dataset_qq)
+box_plot <- boxplot(birthweight$birthweight)
+shap_val <- shapiro.test(birthweight$birthweight)
+print(shap_val)
 ```
-# The data from the histogram and the Q-Q plot indicates that the dataset has normality, the histogram follows the shape of a normal distribution. 
+# The data from the histogram and the Q-Q plot indicates that the dataset has normality, the histogram and box-plot follow the shape of a normal distribution. The Q-Q plot shows perfect normality. The Shapiro-wilk test provides a p-value of: 0.8995. The test doesn't reject normality 
 
 # Bootstrap test:
 ```{r}
-library(boot)
-B <- 1000 
-
-boot_mean <- function(data, indices) {
-  mean(birthweight$birthweight[indices])
+set.seed(123)
+gen_data <- rnorm(1000, mean = sample_mean, sd = sample_sd)
+boot_mean <- function(data, index) {
+  return(mean(data[index]))
 }
-set.seed(123) 
-boot_results <- boot(birthweight$birthweight, boot_mean, R = B)
-
-conf_int <- quantile(boot_results$t, c(0.02, 0.98), na.rm = TRUE)
-
-cat("Bootstrap 96% CI for the mean: [", round(myboot_ci[1], 2), ",", round(myboot_ci[2], 2), "]")
+ 
+boot_results <- boot(data = gen_data, statistic = boot_mean, R = 1000)
+boot_CI <- quantile(boot_results$t, c(0.02, 0.98))
+cat("Bootstrap 96% CI for the mean: [", boot_CI , "]")
 ```
+# The bootstrap 96% CI is in between [2881.533, 2969.063]
+
 # Bounded 96% CI for the mean 
 ```{r}
 standard_error <- sample_sd / sqrt(188)
@@ -65,6 +68,8 @@ lower_bound <- sample_mean - (t_value * standard_error)
 upper_bound <- sample_mean + (t_value * standard_error)
 cat(round(lower_bound, 2), round(upper_bound, 2))
 ```
+# The bounded 96% CI is between [2808.1, 3018.5]
+
 # Calculating sample size for length of 96% CI being at most 100
 ```{r}
 margin_of_error <- 50
@@ -72,6 +77,7 @@ t_value <- qt(0.98, df = 187)
 nn <- ceiling((t_value * sample_sd / margin_of_error) ^ 2)
 cat("The sample size needed to ensure that the length of the 96% CI is at most 100 is ", nn)
 ```
+# 1B
 
 # The sample size required is 833 
 
@@ -83,19 +89,21 @@ t_result <- t.test(birthweight$birthweight, mu = claim_value, alternative = "gre
 p_value_t <- t_result$p.value
 print(t_result)
 ```
-# The results of this t-test indicate that the true mean is in fact larger than 2800, this was shown through the p-value which was significant 0.01357<0.05. Therefore, the null hypothesis can be rejected. 
+# The results of this t-test indicate that the true mean (2829.2) is in fact larger than 2800, this was shown through the p-value which was significant 0.01357<0.05. Therefore, the null hypothesis can be rejected. 
 
 # sign test 
 ```{r}
-sum(nn > 2800)
+sum_sign <- sum(birthweight$birthweight > 2800)
 sign_test <- binom.test(107, 188, p = 0.5, conf.level = 0.96, alternative = "greater")
 p_value_sign <- sign_test$p.value
 print(sign_test)
 ```
 #This verifies the claim of the expert, the evidence is statistically significant, the p-value is less than 0.05 (0.03399).
+#Both of the tests indicated that the H0 can be rejected. 
 
-#C)
+# 1C
 
+# Power can be referred to as the level of precision of a test correctly rejecting the null hypothesis
 # Power of the tests:to compute the power of the tests we use simulation which can calculate the amount of times that the alpha is <0.05 when repeating 1000 times. 
 # t-test
 ```{r}
@@ -123,31 +131,46 @@ for (i in 1:B) {
 } 
 sum(psign < 0.05)
 sum(pttest < 0.05)
-
 ```
 # The t-test has much more power than the sign test in comparison, it's extremely accurate since the simulation produced the result of 1000/1000 alpha<0.05 being produced for the t-test, whereas only 15/1000 for the sign test, which is very weak in comparison. 
 
-# D
+# 1D
 
 ```{r}
-n = 188
-p_hat_l <- 0.25
-
-z_alpha <- qnorm(1 - 0.5*(1 - 0.5), lower.tail = FALSE)
-
-p_hat <- sum(birthweight$birthweight < 2600) / n
-se_hat <- sqrt(p_hat*(1 - p_hat) / n)
-margin_of_error <- z_alpha * se_hat
-
-p_hat_r <- p_hat + margin_of_error
-p_hat_l <- p_hat - margin_of_error
-
-conf_level <- 1 - (2*pnorm(-abs(z_alpha/2)))
-conf_interval <- c(p_hat_l, p_hat_r)
-
-cat("The confidence interval is [", p_hat_l, ",", conf_interval[2], "] with a confidence level of", conf_level)
-
+z2600 = (2600 - sample_mean)/sample_sd
+p2600 <- pnorm(z2600)
+print(p2600)
+# z value for left side
+z_l <- qnorm(0.25)
+#p for right side
+z_r <- z2600 + (z2600-z_l)
+p_r <- pnorm(z_r)
+print(p_r)
 ```
+# CI of p: [0.25,0.41]. 
+# Calculating the confidence level:
+# We can use the Z-table to further confirm that the p-hat value for the right side is 0.41, this has a z-score of 2.32, consequently providing the confidence level as 98%
+```{r}
+tval_98 <- qt(0.01, 187, lower.tail = FALSE)
+tval_98
+```
+# The output indicates that the 98% confidence interval for babies weight <2600 is: [0.25,0.41]
+
+# 1E
+
+```{r}
+m1 <- rep(c("M"), 34)
+f1 <- rep(c("F"), 28)
+both <- c(m1, f1)
+m2 <- rep(c("M"), 61)
+f2 <- rep(c("F"), 65)
+both_2 <- c(m2, f2)
+weight_all <- c(rep(1, 62), rep(2, 126))
+# compute two sample t-test, we find the significance for the differences in mean weight 
+weight_ttest <- t.test(weight_all ~ c(both, both_2), var.equal = TRUE)
+cat("p-value for the t-test is:", weight_ttest$p.value)
+```
+# The t-test provides us with a p-value of 0.41, which indicates that there is no statistical significance, since it is above alpha of 0.05 by a big difference, this allows us to conclude that the mean weight between males and females does not differ 
 ***
 
 # Cholesterol
