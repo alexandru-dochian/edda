@@ -1,9 +1,9 @@
 ---
 title: "Data Analysis Report"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
   word_document: default
 ---
 
@@ -72,8 +72,8 @@ wilcox.test(data$Before, data$After8weeks, paired = TRUE)
 Regarding whether a permutation test is applicable or not, a permutation test can be applied to test the null hypothesis that there is no difference in the mean or median weight between the #two groups. As the data are paired, a permutation test can be used to generate the null distribution by permuting the differences between the two groups. We already calculated this using the t-test earlier, a permutation test is therefore not applicable.
 
 ## c)
-Since the sample column After8weeks is assumed to follow a uniform distribution between 3 and θ, we can use the Central Limit Theorem to estimate θ. Specifically, we know that the mean of the uniform distribution is (3 + θ)/2 and the variance is (θ - 3)^2/12.
-Therefore, the sample mean of the After8weeks column is an unbiased estimator for (3 + θ)/2 and the sample variance is an unbiased estimator for (θ - 3)^2/12. We can use these to construct a confidence interval for θ.
+Since the sample column After8weeks is assumed to follow a uniform distribution between 3 and theta, we can use the Central Limit Theorem to estimate theta. Specifically, we know that the mean of the uniform distribution is (3 + theta)/2 and the variance is (theta - 3)^2/12.
+Therefore, the sample mean of the After8weeks column is an unbiased estimator for (3 + theta)/2 and the sample variance is an unbiased estimator for (theta - 3)^2/12. We can use these to construct a confidence interval for theta.
 To construct a 95% confidence interval, we can use the following R code:
 Calculate sample mean and sample variance
 ```{r}
@@ -99,8 +99,8 @@ Print results
 cat("Estimate for theta (theta hat):", theta_hat, "\n")
 cat("95% Confidence interval for theta:", round(lower_ci, 3), "-", round(upper_ci, 3), "\n")
 ```
-This gives an estimate for θ of 7.171 and a 95% confidence interval of (7.76 - 9.356).
-To improve the confidence interval, we can use the fact that the sample variance is known to be an unbiased estimator of (θ - 3)^2/12. Therefore, we can use the sample variance to construct a more precise confidence interval using the following R code:
+This gives an estimate for theta of 7.171 and a 95% confidence interval of (7.76 - 9.356).
+To improve the confidence interval, we can use the fact that the sample variance is known to be an unbiased estimator of (theta - 3)^2/12. Therefore, we can use the sample variance to construct a more precise confidence interval using the following R code:
 Calculate more precise 95% confidence interval for theta using sample variance
 ```{r}
 margin_of_error <- qt(0.975, df = n-1) * sqrt(sample_var / n) * sqrt(12)
@@ -139,7 +139,7 @@ print the p-value
 ```{r}
 cat("p-value:", p_value, "\n")
 ```
-To find those θ ∈ [3,12] for which the null hypothesis is not rejected, we need to repeat this process for a range of θ values and calculate the p-value for each one. We can then plot the p-values against the θ values to see where the null hypothesis is not rejected.
+To find those theta 'is in' [3,12] for which the null hypothesis is not rejected, we need to repeat this process for a range of theta values and calculate the p-value for each one. We can then plot the p-values against the theta values to see where the null hypothesis is not rejected.
 set the range of theta values
 ```{r}
 theta <- seq(3, 12, by = 0.1)
@@ -163,8 +163,8 @@ plot the p-values against the theta values
 plot(theta, p_values, type = "l", xlab = "theta", ylab = "p-value")
 abline(h = 0.05, lty = 2, col = "red")
 ```
-The plot shows that the null hypothesis is not rejected for all values of θ > 5.5.
-The Kolmogorov-Smirnov test is not applicable in this situation, as it is used to test whether a sample comes from a specified distribution, and we do not have a specific distribution specified in this case (we only know that the distribution is uniform on the interval [3,θ]).
+The plot shows that the null hypothesis is not rejected for all values of theta > 5.5.
+The Kolmogorov-Smirnov test is not applicable in this situation, as it is used to test whether a sample comes from a specified distribution, and we do not have a specific distribution specified in this case (we only know that the distribution is uniform on the interval [3,theta]).
 
 ## E)
 
