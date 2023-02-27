@@ -538,6 +538,47 @@ lm3 = lm(formula = yield ~ block + N + block*K, data = npk)
 ```
 # Chosen best model is: lm(formula = yield ~ block + N + K, data = npk)
 
+# 4E
+```{r}
+npk$block = as.factor(npk$block)
+model = lmer(yield ~ N + (1|block), data = npk, REML=FALSE)
+summary(model)
+```
+#Loading required package: Matrix
+
+#Attaching package: ‘Matrix’
+
+#The following objects are masked from ‘package:tidyr’:
+
+#    expand, pack, unpack
+
+#Linear mixed model fit by maximum likelihood  ['lmerMod']
+#Formula: yield ~ N + (1 | block)
+#   Data: npk
+
+#     AIC      BIC   logLik deviance df.resid 
+#   153.5    158.2    -72.7    145.5       20 
+
+#Scaled residuals: 
+#     Min       1Q   Median       3Q      Max 
+#-1.33031 -0.67264 -0.05558  0.51398  1.80450 
+
+#Random effects:
+# Groups   Name        Variance Std.Dev.
+# block    (Intercept)  9.529   3.087   
+# Residual             19.099   4.370   
+#Number of obs: 24, groups:  block, 6
+
+#Fixed effects:
+#            Estimate Std. Error t value
+#(Intercept)   52.067      1.783  29.198
+#N1             5.617      1.784   3.148
+
+#Correlation of Fixed Effects:
+#   (Intr)
+#N1 -0.500
+
+## There is a difference in variances, we would assume that there is more variance in the fixed model blocks since the blocks aren't constant variables. We can also see that the residual of the variance is shown to be higher in the mixed model, this implies that it is a stronger model. The Nitrogen (N) has a large positive effect on the yield with an estimated increase of 5.62, which is 52.067 
 ***
 ***
 ***
