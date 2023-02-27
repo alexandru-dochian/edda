@@ -12,12 +12,19 @@ output:
 library(tidyverse)
 library(ggplot2)
 library(patchwork)
+library(boot)
 
 ```
 
 ***
 
 # Birthweights
+
+```{r setup_birthweight, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+birthweight <- read.table("resources/birthweight.txt", header = TRUE)
+```
+
 
 ```{r}
 print(birthweight$birthweight)
@@ -121,7 +128,7 @@ cat("The power of the one-sample t-test is", round(power, 4))
 ```{r}
 set.seed(123)
 B = 1000
-n = n
+n = 188
 psign = numeric(B)
 pttest = numeric(B)
 for (i in 1:B) {
@@ -338,6 +345,9 @@ binom.test(num_less_than_4.5, n = nrow(data), p = 0.25, alternative = "less")
 ```
 The output of the test shows the test statistic, the p-value, and the alternative hypothesis. Since the p-value is greater than 0.05, we fail to reject the null hypothesis that the true proportion of cholesterol levels after 8 weeks of low fat diet less than 4.5 is 0.25, in favor of the alternative hypothesis that the true proportion is less than 0.25. Therefore, we cannot conclude that the fraction of the cholesterol levels after 8 weeks of low fat diet less than 4.5 is at most 25%.
 
+
+# Diet
+
 ```{r setup_diet, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 diet <- read.table("resources/diet.txt", header = TRUE)
@@ -345,7 +355,6 @@ diet <- diet %>%
   mutate(weight_loss = preweight - weight6weeks)
 ```
 
-# Diet
 
 Dataset peak:  
 
