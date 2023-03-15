@@ -123,7 +123,155 @@ summary(model2)
 We can compare the R-squared values of the two models to see which one is a better fit. If the R-squared value for model2 is higher, then the logarithmic transformation improved the model fit. If not, then the original model may be the better choice.
 
 # Expenditure on criminal activities
+## Question 2
+### a) Make some graphical summaries of the data. Investigate the problem of influence points, and the problem of collinearity.
+```{r}
+data_crime <- as.data.frame(read.table("C:\\Users\\teodo\\OneDrive\\Desktop\\EDDA\\expensescrime.txt", header=TRUE))
+head(data_crime)
+response <- "expend"
+exp_vars <- c("bad", "crime", "lawyers", "employ", "pop")
+```
+### The first step to investigate the data is to plot paired scatterplots for all possible combinations of variables
+```{r, echo=FALSE, fig.height=5}
+pairs(crime_df[, c(response, exp_vars)])
+```
+### The response variable 'expend' shows a correlation with all of the variables except for 'crime'. We also observe outliers within the larger integers in the data (towards the end of the plots). There is collinearity between the variables of 'bad', 'lawyers', 'employ' and 'pop'. This makes it hard to estimate the regression coefficients. Cook's distance is then used to find the influence points, we can observe outliers if the distance is larger than 1. 
+```{r}
+crimelm <- lm(expend~bad+crime+lawyers+employ+pop, data=crime_df)
+cooks.distance(crimelm)[cooks.distance(crimelm) > 1]
+```
+```{r, include=FALSE}
+plot(cooks.distance(crimelm), type='b', ylab="Cook's distance", main = "Cook's distance for expensecrime.txt")
+```
+### The values of 5, 8, 35 and 44 are shown to be outliers, and therefore they are removed. 
+```{r}
+crime_dfupd <- crime_df[-c(5,8,35,44),]
+```
+### To further analyse collinearity, we can check the correlations between all the explanatory variables, which indeed shows strong correlations between 'bad', 'lawyers', 'employ' and 'pop'.
+```{r}
+round(cor(crime_df[, c(exp_vars)]), 2)
+```
 
+### We also use VIF to investigate which variables are collinear (a VIF larger than 5 may be concerning).
+
+```{r, include=FALSE}
+library(car)
+```
+```{r}
+vif(lm(expend~bad+crime+lawyers+employ+pop, data=crime_df))
+```
+### This is additional confirmation for collinearity between the variables
+### b) Fit a linear regression model to the data. Use the step-up method to find the best model. Comment.
+```{r, include=FALSE}
+print("Step 1")
+print("bad")
+summary(lm(expend~bad, data=crime_df_upd))
+print("crime")
+summary(lm(expend~crime, data=crime_df_upd))
+print("lawyers")
+summary(lm(expend~lawyers, data=crime_df_upd))
+print("employ")
+summary(lm(expend~employ, data=crime_df_upd)) # YES
+print("pop")
+summary(lm(expend~pop, data=crime_df_upd)) 
+```
+```{r, include=FALSE}
+print("Step 2")
+print("bad")
+summary(lm(expend~employ+bad, data=crime_df_upd))
+print("crime")
+summary(lm(expend~employ+crime, data=crime_df_upd)) # YES
+print("lawyers")
+summary(lm(expend~employ+lawyers, data=crime_df_upd))
+print("pop")
+summary(lm(expend~employ+pop, data=crime_df_upd))
+```
+
+```{r, include=FALSE}
+print("Step 3")
+print("bad")
+summary(lm(expend~employ+crime+bad, data=crime_df_upd))
+print("lawyers")
+summary(lm(expend~employ+crime+lawyers, data=crime_df_upd))
+print("pop")
+summary(lm(expend~employ+crime+pop, data=crime_df_upd)) # YES
+```
+
+```{r, include=FALSE}
+print("Step 4")
+print("bad")
+summary(lm(expend~employ+crime+pop+bad, data=crime_df_upd))
+print("lawyers")
+summary(lm(expend~employ+crime+pop+lawyers, data=crime_df_upd))
+```
+### The step-up procedure is carried out. The variables were added in the following order: 'employ', 'crime' and 'pop', after this, no further added variables had significant p-values. Therefore, we come to the final model:
+```{r}
+step_up_lm <- lm(expend~employ+crime+pop, data=crime_df_upd)
+summary(step_up_lm)
+```
+```{r}
+vif(step_up_lm)
+```
+### We see that the step-up method naturally removes collinearity and produces a better model than the one produced using VIF, which had an R-squared value of 0.957.
+
+Finally, we check the model assumptions, which can be accepted based on the following plots:
+
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+qqnorm(residuals(step_up_lm))
+plot(fitted(step_up_lm), residuals(step_up_lm))
+```
+### c) Determine a 95% prediction interval for the expend using the model you preferred in b) for a (hypothetical) state with bad=50, crime=5000, lawyers=5000, employ=5000 and pop=5000. Can you improve this interval?
+### Using the step-up model from question 2b, the 95% prediction interval for 'expend' is found by:
+```{r}
+new_data <- data.frame(bad=50, crime=5000, lawyers=5000, employ=5000, pop=5000)
+predict(step_up_lm, new_data, interval="prediction", level=0.95)
+```
+### This interval can't be improved since the influence points are already removed from the data
+```{r, include=FALSE}
+predict(step_up_lm, new_data, interval="confidence", level=0.95)
+```
+### d) Apply the LASSO method to choose the relevant variables (with default parameters as in the lecture and lambda=lambda.1se). (You will need to install the R-package glmnet, which is not included in the standard distribution of R.) Compare the resulting model with the model obtained in b). (Beware that in general a new run delivers a new model because of a new train set.)
+### implementation of the LASSO method:
+```{r, include=FALSE}
+library(glmnet)
+```
+```{r}
+x <- as.matrix(crime_df_upd[, exp_vars])
+y <- as.matrix(crime_df_upd[, c(response)])
+train <- (sample(1:nrow(x), 0.67*nrow(x))) 
+x.train <- x[train,]; y.train <- y[train]
+x.test <- x[-train,]; y.test <- y[-train]
+lasso.mod <- glmnet(x.train, y.train, alpha=1)
+cv.lasso <- cv.glmnet(x.train,y.train,alpha=1,type.measure='mse')
+```
+```{r}
+plot(lasso.mod, label=T, xvar="lambda")  
+```
+```{r}
+plot(cv.lasso) 
+```
+
+```{r}
+(lambda.1se <- cv.lasso$lambda.1se)
+```
+
+```{r}
+assess.glmnet(lasso.mod, newx = x.test, newy = y.test, s=cv.lasso$lambda.1se)
+```
+### Finding lambda 1se
+```{r}
+coef(lasso.mod, s=cv.lasso$lambda.1se) 
+y.pred <- predict(lasso.mod, s=lambda.1se, newx=x.test) 
+mse.lasso <- mean((y.test - y.pred)^2); mse.lasso 
+```
+### We compare this to the step-up model by finding the MSE.
+```{r}
+new_data <- data.frame(x.test)
+y.pred <- predict(step_up_lm, new_data, interval="confidence", level=0.95)
+mse.step_up <- mean((y.test - y.pred)^2); mse.step_up 
+```
+### We find that the step-up model outperforms the LASSO model, giving a smaller MSE. This may be because LASSO is better fitted to situations with much more explanatory variables.
 
 
 # Titanic
