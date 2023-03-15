@@ -1,0 +1,82 @@
+---
+title: "Data Analysis Report"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r dependencies, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+
+```
+
+***
+
+# Titanic
+
+```{r setup_titanic, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+titanic <- read.table("resources/titanic.txt", header = TRUE)
+```
+
+## a) Overview + liniar model for Survival
+
+### Survival based on Sex and PClass
+
+```{r}
+titanic %>%
+  mutate(Survived = factor(Survived, labels = c("Died", "Survived"))) %>% 
+  ggplot(aes(x = Sex, fill = Survived)) +
+  geom_bar() +
+  facet_wrap(~PClass) +
+  labs(
+    title = "Survival by Sex and PClass",
+    x = "Sex",
+    y = "Count",
+    fill = "Survival Status"
+  )
+```
+
+### Survival based on Age with respect to Sex and PClass
+```{r}
+titanic %>%
+  mutate(Survived = factor(Survived, labels = c("Died", "Survived"))) %>% 
+  ggplot(aes(x = Age, fill = Survived)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~Sex + PClass) +
+  labs(x = "Age",
+       y = "Count",
+       title = "Survival by Age with respect to Sex and PClass",
+       fill = "Survival Status")
+```
+
+
+We will fit a liniar model, having `Survived` as the effect and, independently, `PClass`, `Age` and `Sex` as possible causes.
+
+```{r}
+model <- glm(Survived ~ PClass + Age + Sex, data = titanic, family = binomial)
+model_summary <- summary(model)$coefficients
+model_summary
+```
+
+```{r}
+age_effect_estimate <- summary(model)$coefficients["Age", "Estimate"]
+age_p_value <- summary(model)$coefficients["Age", "Pr(>|z|)"]
+
+pclass2nd_p_value <- summary(model)$coefficients["PClass2nd", "Pr(>|z|)"]
+pclass3nd_p_value <- summary(model)$coefficients["PClass3rd", "Pr(>|z|)"]
+sexmale_p_value <- summary(model)$coefficients["Sexmale", "Pr(>|z|)"]
+```
+
+
+We observe a low p_value (`r age_p_value`) for Age, therefore were reject the initial hypothesis and conclude that age has an effect on the Survival. Apparently, the chances of survival change with (`r age_effect_estimate`) with each year.
+
+We observe a low p_values for PClass2nd (`r pclass2nd_p_value`), PClass3rd (`r pclass3nd_p_value`), Sexmale (`r sexmale_p_value`), therefore were reject the initial hypothesis and conclude that being 2nd class, 3rd class or being a male has an effect on the Survival. 
+
+***
+***
+***
