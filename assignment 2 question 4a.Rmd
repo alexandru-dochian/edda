@@ -1,0 +1,32 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Military Coups
+a)  Perform Poisson regression on the full data set, taking miltcoup as response variable. Comment on your findings.
+
+To perform Poisson regression in R, we first need to load the coups.txt file into a data frame. Then, we can use the glm() function to fit a Poisson regression model with miltcoup as the response variable and all other variables as predictors. 
+
+```{r}
+# Load the data
+coups <- read.table("coups.txt", header=TRUE)
+
+# Fit the Poisson regression model
+model <- glm(miltcoup ~ oligarchy + pollib + parties + pctvote + popn + size + numelec + numregim, data=coups, family="poisson")
+# or model <- glm(miltcoup ~ ., data = coups, family = "poisson")
+
+# Print the model summary
+summary(model)
+```
+
+The family argument specifies the type of model to fit. In this case, we want a Poisson regression model, so we set family = "poisson".
+
+The output of the summary() function will show us the estimated coefficients, standard errors, z-values, and p-values for each predictor variable in the model. We can use these values to interpret the effect of each predictor on the number of successful military coups.
+
+Based on the p-values, we see that the variables oligarchy, pollib, and parties are significant at the 0.05 level. This means that these variables are likely to be important predictors of the number of military coups.
+
+The coefficient for the variable "oligarchy" is positive and statistically significant (i.e., the p-value is less than 0.05). Therefore, we can conclude that countries with more years ruled by a military oligarchy are more likely to have experienced successful military coups. Moreover, the coefficient for the variable "pollib" is negatively and statistically significant. We can therefore conclude that countries with more political liberalization (i.e., full civil rights) are less likely to have experienced successful military coups.
+
+The coefficient for parties is negative and statistically significant, which means that as the number of legal political parties increases, the number of military coups tends to decrease.
