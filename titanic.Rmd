@@ -128,6 +128,59 @@ female_third <- predict(model, data.frame(Age = 55, PClass = "3rd", Sex = "femal
 
 Based on previous predictions we argue that a 1st class 55 years old female `r female_first * 100`% was very likely to survive, while a 2nd class 55 years old male (`r female_first * 100`%) would have likely died.
 
+## c) Survival status predictor + quality measures
+
+I would use a random forest classifier as a predictor.
+
+First I would fill in the missing data with following heuristic:
+
+  * Average age for the missing values on `Age` column.
+  
+  * 50% male/female for missing values on `Sex` column.
+
+We could use cross-validation to split the dataset into train/test datasets.
+
+Python implementation is pretty straightforward with the usage of sklearn.ensemble.RandomForestClassifier class.
+As quality measures we could use:
+
+  * precision [`TP / (TP + FP)`]
+  
+  * recall [`TP/ (TP + FN)`]
+  
+  * accuracy [`(TP + TN) / ALL`]
+ 
+Due to the stochastic nature of the heuristic chosen for filling in `Sex` column and cross-validation dataset splits, I argue the following:
+
+    * Multiple experiments should be  with respect to cross-validation heuristic.
+    * The deviation of the `precision`, `recall` and `accuracy` values should be analysed.
+
+## d) Contingency table test
+
+We will perform two `chi-squared` tests of independence:
+
+### Association between `Survival` and `PClass` 
+```{r}
+class_survival_p_value = chisq.test(table(titanic$Survived, titanic$PClass))$p.value 
+```
+
+We observe a small (<< 0.05) P value (`r class_survival_p_value`) for our test, therefore, we reject the null hypothesis and conclude that there is evidence of an association between the `Survival` and `PClass`.
+
+### Association between `Survival` and `Sex` 
+```{r}
+sex_survival_p_value = chisq.test(table(titanic$Survived, titanic$Sex))$p.value 
+```
+
+We observe a small (<< 0.05) P value (`r sex_survival_p_value`) for our test, therefore, we reject the null hypothesis and conclude that there is evidence of an association between the `Survival` and `Sex`.
+
+## e) `random forest classifier` vs `chi-squared` independence test.
+
+`chi-squared` test provides a statistical significance test to check association between `Survival` and (`PClass` | `Sex`).
+It was useful and fast to get insights over the dataset and to statistically derive the association between (`PClass` | `Sex`) and `Survival`.
+
+Arguably, `random forest classifier` offers a predictive model which can be used for extensive analysis.
+
+Both methods serve their purposes in a complementary way.
+
 ***
 ***
 ***
