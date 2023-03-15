@@ -122,6 +122,10 @@ summary(model2)
 ```
 We can compare the R-squared values of the two models to see which one is a better fit. If the R-squared value for model2 is higher, then the logarithmic transformation improved the model fit. If not, then the original model may be the better choice.
 
+# Expenditure on criminal activities
+
+
+
 # Titanic
 
 ```{r setup_titanic, include=FALSE}
