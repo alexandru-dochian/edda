@@ -126,8 +126,8 @@ We can compare the R-squared values of the two models to see which one is a bett
 ## Question 2
 ### a) Make some graphical summaries of the data. Investigate the problem of influence points, and the problem of collinearity.
 ```{r}
-data_crime <- as.data.frame(read.table("C:\\Users\\teodo\\OneDrive\\Desktop\\EDDA\\expensescrime.txt", header=TRUE))
-head(data_crime)
+crime_df <- as.data.frame(read.table("resources/expensescrime.txt", header=TRUE))
+head(crime_df)
 response <- "expend"
 exp_vars <- c("bad", "crime", "lawyers", "employ", "pop")
 ```
@@ -145,7 +145,7 @@ plot(cooks.distance(crimelm), type='b', ylab="Cook's distance", main = "Cook's d
 ```
 ### The values of 5, 8, 35 and 44 are shown to be outliers, and therefore they are removed. 
 ```{r}
-crime_dfupd <- crime_df[-c(5,8,35,44),]
+crime_df_upd <- crime_df[-c(5,8,35,44),]
 ```
 ### To further analyse collinearity, we can check the correlations between all the explanatory variables, which indeed shows strong correlations between 'bad', 'lawyers', 'employ' and 'pop'.
 ```{r}
@@ -165,48 +165,48 @@ vif(lm(expend~bad+crime+lawyers+employ+pop, data=crime_df))
 ```{r, include=FALSE}
 print("Step 1")
 print("bad")
-summary(lm(expend~bad, data=crime_df_upd))
+summary(lm(expend~bad, data=crime_df))
 print("crime")
-summary(lm(expend~crime, data=crime_df_upd))
+summary(lm(expend~crime, data=crime_df))
 print("lawyers")
-summary(lm(expend~lawyers, data=crime_df_upd))
+summary(lm(expend~lawyers, data=crime_df))
 print("employ")
-summary(lm(expend~employ, data=crime_df_upd)) # YES
+summary(lm(expend~employ, data=crime_df)) # YES
 print("pop")
-summary(lm(expend~pop, data=crime_df_upd)) 
+summary(lm(expend~pop, data=crime_df)) 
 ```
 ```{r, include=FALSE}
 print("Step 2")
 print("bad")
-summary(lm(expend~employ+bad, data=crime_df_upd))
+summary(lm(expend~employ+bad, data=crime_df))
 print("crime")
-summary(lm(expend~employ+crime, data=crime_df_upd)) # YES
+summary(lm(expend~employ+crime, data=crime_df)) # YES
 print("lawyers")
-summary(lm(expend~employ+lawyers, data=crime_df_upd))
+summary(lm(expend~employ+lawyers, data=crime_df))
 print("pop")
-summary(lm(expend~employ+pop, data=crime_df_upd))
+summary(lm(expend~employ+pop, data=crime_df))
 ```
 
 ```{r, include=FALSE}
 print("Step 3")
 print("bad")
-summary(lm(expend~employ+crime+bad, data=crime_df_upd))
+summary(lm(expend~employ+crime+bad, data=crime_df))
 print("lawyers")
-summary(lm(expend~employ+crime+lawyers, data=crime_df_upd))
+summary(lm(expend~employ+crime+lawyers, data=crime_df))
 print("pop")
-summary(lm(expend~employ+crime+pop, data=crime_df_upd)) # YES
+summary(lm(expend~employ+crime+pop, data=crime_df)) # YES
 ```
 
 ```{r, include=FALSE}
 print("Step 4")
 print("bad")
-summary(lm(expend~employ+crime+pop+bad, data=crime_df_upd))
+summary(lm(expend~employ+crime+pop+bad, data=crime_df))
 print("lawyers")
-summary(lm(expend~employ+crime+pop+lawyers, data=crime_df_upd))
+summary(lm(expend~employ+crime+pop+lawyers, data=crime_df))
 ```
 ### The step-up procedure is carried out. The variables were added in the following order: 'employ', 'crime' and 'pop', after this, no further added variables had significant p-values. Therefore, we come to the final model:
 ```{r}
-step_up_lm <- lm(expend~employ+crime+pop, data=crime_df_upd)
+step_up_lm <- lm(expend~employ+crime+pop, data=crime_df)
 summary(step_up_lm)
 ```
 ```{r}
@@ -237,8 +237,8 @@ predict(step_up_lm, new_data, interval="confidence", level=0.95)
 library(glmnet)
 ```
 ```{r}
-x <- as.matrix(crime_df_upd[, exp_vars])
-y <- as.matrix(crime_df_upd[, c(response)])
+x <- as.matrix(crime_df[, exp_vars])
+y <- as.matrix(crime_df[, c(response)])
 train <- (sample(1:nrow(x), 0.67*nrow(x))) 
 x.train <- x[train,]; y.train <- y[train]
 x.test <- x[-train,]; y.test <- y[-train]
@@ -348,9 +348,9 @@ age_second_class = summary(model_age_pclass)$coefficients["Age:PClass2nd", "Pr(>
 age_third_class = summary(model_age_pclass)$coefficients["Age:PClass3rd", "Pr(>|z|)"]
 ```
 
-Big P values (> 0.05) for Age:PClass1st (`r age_first_class`) and Age:PClass3rd (`r age_third_class`) suggest there is no strong evidence of an interaction between age and those classes.
+Big P value (> 0.05) for Age:PClass1st (`r age_first_class`) suggest there is no strong evidence of an interaction between age and 1st class when we observe the survival rates.
 
-Low P value (<< 0.05) for Age:PClass2nd (`r age_second_class`) suggest therestrong evidence of an interaction between age and 2nd class of passengers.
+Low P values (<< 0.05) for Age:PClass2nd (`r age_second_class`) and Age:PClass3rd (`r age_third_class`)  suggest there is strong evidence of an interaction between age and 2nd/3rd class when we observe the survival rates.
 
 #### Age * Sex interaction
 ```{r}
@@ -440,7 +440,7 @@ Arguably, `random forest classifier` offers a predictive model which can be used
 Both methods serve their purposes in a complementary way.
 
 # Military Coups
-a)  Perform Poisson regression on the full data set, taking miltcoup as response variable. Comment on your findings.
+## a)  Perform Poisson regression on the full data set, taking miltcoup as response variable. Comment on your findings.
 
 To perform Poisson regression in R, we first need to load the coups.txt file into a data frame. Then, we can use the glm() function to fit a Poisson regression model with miltcoup as the response variable and all other variables as predictors. 
 
@@ -466,6 +466,58 @@ The coefficient for the variable "oligarchy" is positive and statistically signi
 
 The coefficient for parties is negative and statistically significant, which means that as the number of legal political parties increases, the number of military coups tends to decrease.
 
+## b)
+```{r, include=FALSE}
+step1 <- glm(miltcoup ~ oligarchy + parties + pctvote + popn + size + numelec + pollib, data = coups, family = poisson)
+drop1(step1, test="Chisq")
+```
+
+```{r, include=FALSE}
+step2 <- glm(miltcoup ~ oligarchy + parties + pctvote + popn + size + pollib, data = coups, family = poisson)
+drop1(step2, test="Chisq")
+```
+
+```{r, include=FALSE}
+step3 <- glm(miltcoup ~ oligarchy + parties + pctvote + popn + pollib, data = coups)
+drop1(step3, test="Chisq")
+```
+
+```{r, include=FALSE}
+step4 <- glm(miltcoup ~ oligarchy + parties + popn + pollib, data = coups)
+drop1(step4, test="Chisq")
+```
+
+```{r, include=FALSE}
+step5 <- glm(miltcoup ~ oligarchy + parties + pollib, data = coups, family = poisson)
+drop1(step5, test="Chisq")
+```
+
+The step down method was applied, which removes the variables: numelec, size, pctvote, and popn, respectively. After this, all of the remaining variables were significant, resulting in the model:
+
+```{r}
+final_plm <- glm(miltcoup ~ oligarchy + parties + pollib, data = coups, family = poisson)
+summary(final_plm, test="Chisq")
+```
+
+All of the variables show significance when compared to 4a). 
+
+## c)
+
+```{r}
+coups$pollib <- as.factor(coups$pollib)
+```
+
+```{r}
+mean(coups$oligarchy); mean(coups$parties)
+```
+
+
+```{r}
+newdata <- data.frame(pollib=c(0, 1, 2), oligarchy=c(5.22, 5.22, 5.22), parties=c(17.1, 17.1, 17.1))
+predict(final_plm, newdata, type="response")
+```
+
+The model predicts that there will be approximately 3 successful coups for pollib=0, roughly 2 successful coups for pollib=1, and 1 successful coup for pollib=2.
 
 ***
 ***
