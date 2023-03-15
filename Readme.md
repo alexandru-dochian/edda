@@ -8,9 +8,13 @@
 
 - Datasets are located [here](resources/)
 
-### Report
+### First report
 
- - Report is located [here](Readme.pdf)
+ - First report is located [here](FirstReport.pdf)
+
+### Second report
+
+ - Second report is located [here](SecondReport.pdf)
 
 ---
 ---

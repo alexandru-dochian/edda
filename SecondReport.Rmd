@@ -1,0 +1,320 @@
+---
+title: "Data Analysis Report"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r dependencies, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+
+```
+
+***
+
+# Trees
+a) Investigate whether the tree type influences volume by performing ANOVA, without taking diameter and height into account. Can a t-test be related to the above ANOVA test? Estimate the volumes for the two tree types.
+
+```{r}
+# Load the data and calculate the mean volume for each tree type
+
+data <- read.table("resources/treeVolume.txt", header=TRUE)
+mean_vol_beech <- mean(data[data$type == "beech", "volume"])
+mean_vol_oak <- mean(data[data$type == "oak", "volume"])
+```
+
+We use the aov() function to perform ANOVA:
+
+```{r}
+aov_result <- aov(volume ~ type, data=data)
+summary(aov_result)
+```
+
+The output of the summary function shows the results of the ANOVA test. When the p-value is below the given confidence level (0.05), we can conclude that there is a significant difference in volumes between the two tree types.
+
+We can see that the p-value is 0.174. Therefore we can conclude that there is not a significant difference in volumes between the two tree types.
+
+It is possible to relate the ANOVA test to a t-test by performing a two-sample t-test between the volumes of the two tree types. However, the ANOVA test is more appropriate when we have more than two groups to compare.
+
+It is possible to relate an ANOVA test to a t-testby performing a two-sample t-test between the volumes of the two tree types. However, the ANOVA test is more appropriate when we have more than two groups to compare.
+
+To perform a t-test, we can use the t.test() function:
+```{r}
+t_test_result <- t.test(data[data$type == "beech", "volume"], data[data$type == "oak", "volume"])
+t_test_result
+```
+
+The p-value from the t-test is 0.1659. Relatively similar result to ANOVA performed earlier. The t-test shows us if there is a significant difference in mean volume between the two tree types. With the result we can again say that there is not a significant difference in volumes between the two tree types.
+
+To calculate the mean value of each group we estimate the volumes for each of the tree types.
+```{r}
+# calculate mean volumes for each tree type
+mean_volumes <- tapply(data$volume, data$type, mean)
+mean_volumes
+```
+
+b)  Now include diameter and height as explanatory variables into the analysis. Investigate whether the influence of diameter on volume is similar for the both tree types. Do the same for the influence of height on volume. (Consider at most one (relevant) pairwise interaction per model.) Comment.
+
+To investigate the influence of diameter and height on volume, we can perform a multiple linear regression analysis in R. We can start by creating a model that includes both diameter and height as explanatory variables:
+
+```{r}
+# create multiple linear regression model
+reg_model <- lm(volume ~ type + diameter + height, data = data)
+summary(reg_model)
+```
+
+This code will create a multiple linear regression model using the lm() function in R and display the results using the summary() function. The output will show the coefficients for each variable and their significance.
+
+To investigate whether the influence of diameter on volume is similar for the both tree types, we can include a diameter-tree type interaction term in the model:
+```{r}
+# create multiple linear regression model with interaction term
+reg_model_interaction <- lm(volume ~ type * diameter + height, data = data)
+summary(reg_model_interaction)
+```
+
+This code will create a new regression model with an interaction term between tree type and diameter, and display the results using the summary() function. We can see that the interaction term is not significant (0.474 > 0.05), therefore, the relationship between diameter and volume does not depend on the tree type.
+
+We can perform a similar analysis to investigate the influence of height on volume:
+```{r}
+# create multiple linear regression model with interaction term
+reg_model_interaction <- lm(volume ~ type + diameter + height * type, data = data)
+summary(reg_model_interaction)
+```
+
+This code will create a new regression model with an interaction term between tree type and height, and display the results using the summary() function. We can see that the interaction term is not significant (0.17613 > 0.05), therefore, the relationship between height and volume does not depend on the tree type.
+
+In conclusion, by including diameter and height as explanatory variables, we can see that both variables do not have a significant influence on volume, and that the relationships between these variables and volume do not depend on the tree type.
+
+c)  Using the results from c), investigate how diameter, height and type influence volume. Comment. Using the resulting model, predict the volume for a tree with the (overall) average diameter and height?
+
+Using the results from b), we can fit a linear regression model for volume using diameter, height, and type as explanatory variables:
+```{r}
+lm_all <- lm(volume ~ diameter + height + type, data=data)
+summary(lm_all)
+```
+The results show that diameter and height have a significant influence on volume. Type does not have a significant influence on volume.
+
+To predict the volume for a tree with the overall average diameter and height, we can calculate the mean values for diameter and height and use them in the model:
+```{r}
+mean_diam <- mean(data$diameter)
+mean_height <- mean(data$height)
+
+predicted_vol <- predict(lm_all, newdata=data.frame(diameter=mean_diam, height=mean_height, type="beech"))
+predicted_vol
+```
+
+d)  Propose a transformation of the explanatory variables that possibly yields a better model (verify this).  (Hint: think of a natural link between the response and explanatory variables.)
+
+One possible transformation of the explanatory variables is to take the natural logarithm of the diameter and height. This transformation can be useful when the relationship between the explanatory variables and the response is not linear but instead follows a logarithmic pattern. We can apply this transformation by creating new variables in the data frame:
+
+```{r}
+data$log_diameter <- log(data$diameter)
+data$log_height <- log(data$height)
+```
+Then, we can build a new model using these transformed variables:
+```{r}
+model2 <- lm(volume ~ log_diameter + log_height + type, data = data)
+summary(model2)
+```
+We can compare the R-squared values of the two models to see which one is a better fit. If the R-squared value for model2 is higher, then the logarithmic transformation improved the model fit. If not, then the original model may be the better choice.
+
+# Titanic
+
+```{r setup_titanic, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+titanic <- read.table("resources/titanic.txt", header = TRUE)
+```
+
+## a) Overview + liniar model for Survival
+
+### Survival based on Sex and PClass
+
+```{r}
+titanic %>%
+  mutate(Survived = factor(Survived, labels = c("Died", "Survived"))) %>% 
+  ggplot(aes(x = Sex, fill = Survived)) +
+  geom_bar() +
+  facet_wrap(~PClass) +
+  labs(
+    title = "Survival by Sex and PClass",
+    x = "Sex",
+    y = "Count",
+    fill = "Survival Status"
+  )
+```
+
+### Survival based on Age with respect to Sex and PClass
+```{r}
+titanic %>%
+  mutate(Survived = factor(Survived, labels = c("Died", "Survived"))) %>% 
+  ggplot(aes(x = Age, fill = Survived)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~Sex + PClass) +
+  labs(x = "Age",
+       y = "Count",
+       title = "Survival by Age with respect to Sex and PClass",
+       fill = "Survival Status")
+```
+
+
+We will fit a liniar model, having `Survived` as the effect and, independently, `PClass`, `Age` and `Sex` as possible causes.
+
+```{r}
+model <- glm(Survived ~ PClass + Age + Sex, data = titanic, family = binomial)
+model_summary <- summary(model)$coefficients
+model_summary
+```
+
+```{r}
+age_effect_estimate <- summary(model)$coefficients["Age", "Estimate"]
+age_p_value <- summary(model)$coefficients["Age", "Pr(>|z|)"]
+
+pclass2nd_p_value <- summary(model)$coefficients["PClass2nd", "Pr(>|z|)"]
+pclass3nd_p_value <- summary(model)$coefficients["PClass3rd", "Pr(>|z|)"]
+sexmale_p_value <- summary(model)$coefficients["Sexmale", "Pr(>|z|)"]
+```
+
+
+We observe a low p_value (`r age_p_value`) for Age, therefore were reject the initial hypothesis and conclude that age has an effect on the Survival. Apparently, the chances of survival change with (`r age_effect_estimate`) with each year.
+
+We observe a low p_values for PClass2nd (`r pclass2nd_p_value`), PClass3rd (`r pclass3nd_p_value`), Sexmale (`r sexmale_p_value`), therefore were reject the initial hypothesis and conclude that being 2nd class, 3rd class or being a male has an effect on the Survival. 
+
+## b) Interactions + Studying a 55 years old person chances to survive
+
+### Interactions
+
+#### Age * PClass interaction
+
+```{r}
+model_age_pclass <- glm(Survived ~ Age:PClass, data = titanic, family = "binomial")
+age_first_class = summary(model_age_pclass)$coefficients["Age:PClass1st", "Pr(>|z|)"]
+age_second_class = summary(model_age_pclass)$coefficients["Age:PClass2nd", "Pr(>|z|)"]
+age_third_class = summary(model_age_pclass)$coefficients["Age:PClass3rd", "Pr(>|z|)"]
+```
+
+Big P values (> 0.05) for Age:PClass1st (`r age_first_class`) and Age:PClass3rd (`r age_third_class`) suggest there is no strong evidence of an interaction between age and those classes.
+
+Low P value (<< 0.05) for Age:PClass2nd (`r age_second_class`) suggest therestrong evidence of an interaction between age and 2nd class of passengers.
+
+#### Age * Sex interaction
+```{r}
+model_age_sex <- glm(Survived ~ Age:Sex, data = titanic, family = "binomial")
+age_female = summary(model_age_sex)$coefficients["Age:Sexfemale", "Pr(>|z|)"]
+age_male = summary(model_age_sex)$coefficients["Age:Sexmale", "Pr(>|z|)"]
+```
+Low P values (<< 0.05) for Age:Sexfemale (`r age_female`) and Age:Sexmale (age_male) suggest there is strong evidence of an interaction between age and the sex of the passenger
+
+### Hypothetical of a 55 years old person
+
+We build a linear model to predict `Survival` with respect to `Age`, `PClass`, `Sex` and their interactions.
+```{r}
+model <- glm(Survived ~ Age*PClass*Sex, data = titanic, family = "binomial")
+male_first <- predict(model, data.frame(Age = 55, PClass = "1st", Sex = "male"), type = "response") 
+male_second <- predict(model, data.frame(Age = 55, PClass = "2nd", Sex = "male"), type = "response") 
+male_third <- predict(model, data.frame(Age = 55, PClass = "3rd", Sex = "male"), type = "response") 
+
+female_first <- predict(model, data.frame(Age = 55, PClass = "1st", Sex = "female"), type = "response") 
+female_second <- predict(model, data.frame(Age = 55, PClass = "2nd", Sex = "female"), type = "response") 
+female_third <- predict(model, data.frame(Age = 55, PClass = "3rd", Sex = "female"), type = "response") 
+```
+
+  * Male
+    + 55 years old `male` of `1st` class has a change of `r male_first * 100`% to survive.
+    + 55 years old `male` of `2nd` class has a change of `r male_second * 100`% to survive.
+    + 55 years old `male` of `3rd` class has a change of `r male_third * 100`% to survive.
+
+  * Female
+    + 55 years old `female` of `1st` class has a change of `r female_first * 100`% to survive.
+    + 55 years old `female` of `2nd` class has a change of `r female_second * 100`% to survive.
+    + 55 years old `female` of `3rd` class has a change of `r female_third * 100`% to survive.
+
+Based on previous predictions we argue that a 1st class 55 years old female `r female_first * 100`% was very likely to survive, while a 2nd class 55 years old male (`r female_first * 100`%) would have likely died.
+
+## c) Survival status predictor + quality measures
+
+I would use a random forest classifier as a predictor.
+
+First I would fill in the missing data with following heuristic:
+
+  * Average age for the missing values on `Age` column.
+  
+  * 50% male/female for missing values on `Sex` column.
+
+We could use cross-validation to split the dataset into train/test datasets.
+
+Python implementation is pretty straightforward with the usage of sklearn.ensemble.RandomForestClassifier class.
+As quality measures we could use:
+
+  * precision [`TP / (TP + FP)`]
+  
+  * recall [`TP/ (TP + FN)`]
+  
+  * accuracy [`(TP + TN) / ALL`]
+ 
+Due to the stochastic nature of the heuristic chosen for filling in `Sex` column and cross-validation dataset splits, I argue the following:
+
+    * Multiple experiments should be  with respect to cross-validation heuristic.
+    * The deviation of the `precision`, `recall` and `accuracy` values should be analysed.
+
+## d) Contingency table test
+
+We will perform two `chi-squared` tests of independence:
+
+### Association between `Survival` and `PClass` 
+```{r}
+class_survival_p_value = chisq.test(table(titanic$Survived, titanic$PClass))$p.value 
+```
+
+We observe a small (<< 0.05) P value (`r class_survival_p_value`) for our test, therefore, we reject the null hypothesis and conclude that there is evidence of an association between the `Survival` and `PClass`.
+
+### Association between `Survival` and `Sex` 
+```{r}
+sex_survival_p_value = chisq.test(table(titanic$Survived, titanic$Sex))$p.value 
+```
+
+We observe a small (<< 0.05) P value (`r sex_survival_p_value`) for our test, therefore, we reject the null hypothesis and conclude that there is evidence of an association between the `Survival` and `Sex`.
+
+## e) `random forest classifier` vs `chi-squared` independence test.
+
+`chi-squared` test provides a statistical significance test to check association between `Survival` and (`PClass` | `Sex`).
+It was useful and fast to get insights over the dataset and to statistically derive the association between (`PClass` | `Sex`) and `Survival`.
+
+Arguably, `random forest classifier` offers a predictive model which can be used for extensive analysis.
+
+Both methods serve their purposes in a complementary way.
+
+# Military Coups
+a)  Perform Poisson regression on the full data set, taking miltcoup as response variable. Comment on your findings.
+
+To perform Poisson regression in R, we first need to load the coups.txt file into a data frame. Then, we can use the glm() function to fit a Poisson regression model with miltcoup as the response variable and all other variables as predictors. 
+
+```{r}
+# Load the data
+coups <- read.table("resources/coups.txt", header=TRUE)
+
+# Fit the Poisson regression model
+model <- glm(miltcoup ~ oligarchy + pollib + parties + pctvote + popn + size + numelec + numregim, data=coups, family="poisson")
+# or model <- glm(miltcoup ~ ., data = coups, family = "poisson")
+
+# Print the model summary
+summary(model)
+```
+
+The family argument specifies the type of model to fit. In this case, we want a Poisson regression model, so we set family = "poisson".
+
+The output of the summary() function will show us the estimated coefficients, standard errors, z-values, and p-values for each predictor variable in the model. We can use these values to interpret the effect of each predictor on the number of successful military coups.
+
+Based on the p-values, we see that the variables oligarchy, pollib, and parties are significant at the 0.05 level. This means that these variables are likely to be important predictors of the number of military coups.
+
+The coefficient for the variable "oligarchy" is positive and statistically significant (i.e., the p-value is less than 0.05). Therefore, we can conclude that countries with more years ruled by a military oligarchy are more likely to have experienced successful military coups. Moreover, the coefficient for the variable "pollib" is negatively and statistically significant. We can therefore conclude that countries with more political liberalization (i.e., full civil rights) are less likely to have experienced successful military coups.
+
+The coefficient for parties is negative and statistically significant, which means that as the number of legal political parties increases, the number of military coups tends to decrease.
+
+
+***
+***
+***
